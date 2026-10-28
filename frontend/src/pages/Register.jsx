@@ -23,8 +23,7 @@ const Register = () => {
             name, email, password
         }
         try {
-            const response = await register(data);
-            console.log("User Registered!", response);
+            await register(data);
             navigate("/login");
             registerNotify();
         } catch (error) {
