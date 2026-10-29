@@ -56,6 +56,17 @@ export const updateDocument = async (req, res) => {
     if (!id) {
       res.status(404).json({ message: "Document Not Found" });
     }
+    if (
+      !title ||
+      !content ||
+      title.trim().length === 0 ||
+      content.trim().length === 0
+    ) {
+      return res.status(400).json({
+        message:
+          "Please add the valid data (fields cannot be empty or just spaces)",
+      });
+    }
     const updatedDocument = await Document.findByIdAndUpdate(id, req.body);
     return res.status(200).json({ message: "Document Updated Succesfully!", updatedDocument });
   } catch (error) {

@@ -14,7 +14,7 @@ const Document = ({ title, content, createdAt, documentId, onDelete }) => (
                 </h4>
 
                 <div
-                    className="h-[150px] overflow-y-auto overflow-x-hidden text-[8px] whitespace-normal break-words" style={{ overflowWrap: "anywhere" }}
+                    className="h-[150px] overflow-hidden text-[8px] whitespace-normal break-words" style={{ overflowWrap: "anywhere" }}
                     dangerouslySetInnerHTML={{ __html: content || "" }}
                 />
             </div>

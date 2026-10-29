@@ -5,7 +5,8 @@ import "react-quill-new/dist/quill.snow.css";
 import "../App.css";
 import Button from "./Button";
 import { createDocument, getDocumentById, updateDocument } from "../lib/document";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { IoArrowBack } from "react-icons/io5";
 import { toast } from "react-toastify";
 
 const SizeStyle = Quill.import("attributors/style/size");
@@ -30,11 +31,11 @@ export default function RichTextEditor() {
   const [title, setTitle] = useState("Untitled document");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
   const params = useParams();
 
-  const addNotify = () => toast("Document Saved!");
-  const updateNotify = () => toast("Document Updated!");
+  const addNotify = () => toast("✅ Document Saved!");
+  const updateNotify = () => toast("✅ Document Updated!");
+  const emptyNotify = () => toast("❌ Please add text in the title or content");
 
 
   const { id } = params;
@@ -60,7 +61,7 @@ export default function RichTextEditor() {
   const modules = useMemo(
     () => ({
       toolbar: [
-        [{ header: [1, 2, 3, false] }, { size: [false, "10px", "12px", "14px", "18px", "24px", "32px"] }],
+        [{ header: [1, 2, 3, false] }, { size: [false, "10px", "12px", "14px", "16px", "18px", "24px", "32px"] }],
         ["bold", "italic", "underline", "strike"],
         [{ align: [] }],
         [{ list: "ordered" }, { list: "bullet" }, "blockquote", "link"],
@@ -76,32 +77,41 @@ export default function RichTextEditor() {
   );
 
   const executeSubmit = async () => {
-      setSaving(true);
-      setError("");
+    setSaving(true);
+    setError("");
 
-      try {
-        const response = await createDocument({ title, content }, token);
-        const savedDocument = response.data.document;
-        navigate("/");
-        addNotify();
-      } catch (error) {
-        setError(error.response?.data?.message ?? "Could not save the document");
-      } finally {
-        setSaving(false);
-      }
+    try {
+      if (
+        !title ||
+        !content ||
+        title.trim().length === 0 ||
+        content.trim().length === 0
+      ) return emptyNotify();
+      const response = await createDocument({ title, content }, token);
+      const savedDocument = response.data.document;
+      addNotify();
+    } catch (error) {
+      setError(error.response?.data?.message ?? "Could not save the document");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const handleSubmit = async (e) => {
-    if(e) e.preventDefault();
+    if (e) e.preventDefault();
     await executeSubmit();
   }
-
-
 
   const handleUpdate = async () => {
     setSaving(true);
     if (!id) return;
     try {
+      if (
+        !title ||
+        !content ||
+        title.trim().length === 0 ||
+        content.trim().length === 0
+      ) return emptyNotify();
       const response = await updateDocument(id, { title, content }, token);
       updateNotify();
     } catch (error) {
@@ -132,12 +142,15 @@ export default function RichTextEditor() {
     <div className="document-container">
       {error && <div className="text-red p-3">{error}</div>}
       <header className="document-header">
-        <input
-          className="document-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          aria-label="Document title"
-        />
+        <div className="flex items-center gap-4">
+          <Link to="/"><IoArrowBack className="text-2xl" /></Link>
+          <input
+            className="document-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            aria-label="Document title"
+          />
+        </div>
         {(id) ? <Button name="Update" onClick={handleUpdate} /> : <Button name={saving ? "Saving..." : "Save"} onClick={handleSubmit} />}
       </header>
 
