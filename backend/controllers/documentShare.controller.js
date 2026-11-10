@@ -76,15 +76,22 @@ export const createDocumentInvitation = async (req, res) => {
     });
 
     try {
+      console.log("1. Starting invitation email...");
+
       await sendInvitationEmail({
         inviteeEmail,
         documentTitle: document.title,
         role,
         invitationId: invitation._id,
       });
+
+      console.log("2. Invitation email sent successfully");
+
     } catch (error) {
       console.log("Email sending failed", error.message);
     }
+
+    console.log("3. Sending API response...");
 
     return res.status(201).json({
       success: true,

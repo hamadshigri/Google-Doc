@@ -17,10 +17,11 @@ export function createDocumentInvitation(documentId, data, token) {
     {
       headers: {
         Authorization: `Bearer ${token}`,
-        Accept: "application/json"
-      }
+        Accept: "application/json",
+      },
+      timeout: 20000,
     }
-  )
+  );
 }
 
 export function acceptInvitation(invitationId, token) {
