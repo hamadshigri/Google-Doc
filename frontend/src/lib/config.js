@@ -1,1 +1,5 @@
-export const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:3000"
+const configuredBaseUrl = import.meta.env.VITE_BASE_URL?.trim();
+
+export const BASE_URL = (
+  configuredBaseUrl || "http://localhost:3000"
+).replace(/\/$/, "");
