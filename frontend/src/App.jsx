@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import Document from "./pages/Document";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import InvitationPage from "./pages/InvitationPage";
 
 
 const isTokenExpired = (token) => {
@@ -42,8 +43,10 @@ const App = () => {
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/document" element={<ProtectedRoute><Document /></ProtectedRoute>} />
           <Route path="/document/:id" element={<ProtectedRoute><Document /></ProtectedRoute>} />
+          <Route path="/invitations/:id" element={<ProtectedRoute><InvitationPage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
+
     </>
   )
 }

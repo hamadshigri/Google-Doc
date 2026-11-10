@@ -1,23 +1,32 @@
 import Document from "../models/document.model.js";
+import DocumentShare from "../models/documentShare.model.js";
 
 export const createDocument = async (req, res) => {
   try {
-    const { title, content } = req.body;
-    if (
-      !title ||
-      !content ||
-      title.trim().length === 0 ||
-      content.trim().length === 0
-    ) {
+    const { title, content = "" } = req.body;
+    if (typeof title !== "string" || !title.trim()) {
       return res.status(400).json({
-        message:
-          "Please add the valid data (fields cannot be empty or just spaces)",
+        success: false,
+        message: "Please add the valid document title",
       });
     }
-    const document = await Document.create({ title, content, user: req.user });
+
+    if (typeof content !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid document content",
+      });
+    }
+
+    const document = await Document.create({
+      title: title.trim(),
+      content,
+      user: req.user,
+    });
 
     return res.status(201).json({ success: true, document });
   } catch (error) {
+    console.error("Create Document Error:", error);
     return res
       .status(500)
       .json({ success: false, message: "Failed to create document" });
@@ -26,10 +35,36 @@ export const createDocument = async (req, res) => {
 
 export const getDocument = async (req, res) => {
   try {
-    console.log(req.user)
-    const documents = await Document.find({user: req.user}).sort({ updatedAt: -1 });
+    const userId = req.user;
 
-    return res.status(200).json({ success: true, documents });
+    const sharedDocuments = await DocumentShare.find({
+      invitedUser: userId,
+      status: "accepted",
+    });
+
+    const sharedDocumentIds = sharedDocuments.map((share) => share.document);
+
+    const documents = await Document.find({
+      $or: [{ user: userId }, { _id: { $in: sharedDocumentIds } }],
+    }).sort({ updatedAt: -1 });
+
+    const documentWithRole = documents.map((document) => {
+      const isOwner = document.user.toString() === userId.toString();
+
+      const share = sharedDocuments.find(
+        (item) => item.document.toString() === document._id.toString(),
+      );
+
+      return {
+        ...document.toObject(),
+        role: isOwner ? "owner" : share.role,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      documents: documentWithRole,
+    });
   } catch (error) {
     return res
       .status(500)
@@ -39,50 +74,71 @@ export const getDocument = async (req, res) => {
 
 export const getDocumentById = async (req, res) => {
   try {
-    const { id } = req.params;
-    if (!id) {
-      res.status(404).json({ message: "Document Not Found" });
-    }
-    const document = await Document.findById(id);
-    return res.status(200).json(document);
+    return res.status(200).json({
+      success: true,
+      document: req.document,
+      role: req.documentRole,
+    });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error("Get Document Error:", error);
+    return res
+      .status(500)
+      .json({ sucess: false, message: "Failed to fetch document" });
   }
 };
 
 export const updateDocument = async (req, res) => {
   try {
-    const { id } = req.params;
-    if (!id) {
-      res.status(404).json({ message: "Document Not Found" });
-    }
-    if (
-      !title ||
-      !content ||
-      title.trim().length === 0 ||
-      content.trim().length === 0
-    ) {
+    const { title, content } = req.body;
+    if (typeof title !== "string" || title.trim().length === 0) {
       return res.status(400).json({
-        message:
-          "Please add the valid data (fields cannot be empty or just spaces)",
+        success: true,
+        message: "Document title cannot be empty",
       });
     }
-    const updatedDocument = await Document.findByIdAndUpdate(id, req.body);
-    return res.status(200).json({ message: "Document Updated Succesfully!", updatedDocument });
+
+    if (typeof content !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid document content",
+      });
+    }
+
+    req.document.title = title.trim();
+    req.document.content = content;
+
+    const updatedDocument = await req.document.save();
+
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Document Updated Succesfully!",
+        document: updatedDocument,
+      });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error("Update Document Error:", error);
+
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to update document" });
   }
 };
 
 export const deleteDocument = async (req, res) => {
   try {
-    const {id} = req.params;
-    if(!id) {
-      return res.status(404).json({message: "Document Not Found"});
-    }
-    const document = await Document.findByIdAndDelete(id);
-    return res.status(200).json({message: "Document Deleted Succesfully!", document});
+    const document = req.document;
+
+    await document.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: "Document deleted successfully",
+    });
   } catch (error) {
-    res.status(500).json({error: error.message});
+    console.error("Delete Document Error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to delete document" });
   }
-}
+};

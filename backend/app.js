@@ -5,7 +5,7 @@ import cors from "cors";
 import { connectDB } from "./config/db.js";
 import documentRoutes from "./routes/document.route.js";
 import userRoutes from "./routes/user.route.js";
-import { verifyAuthentication } from "./middlewares/auth.middleware.js";
+import documentShareRoutes from "./routes/documentShare.route.js";
 
 const app = express();
 
@@ -16,8 +16,8 @@ app.use(cors());
 connectDB();
 
 app.use("/", userRoutes);
-app.use(verifyAuthentication);
 app.use("/document", documentRoutes);
+app.use("/document", documentShareRoutes);
 
 app.get("/", (req, res) => {
   res.send("homepage");
