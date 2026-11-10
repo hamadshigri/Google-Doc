@@ -19,8 +19,9 @@ export const sendInvitationEmail = async ({
     role,
     invitationId,
 }) => {
+    const FRONTEND_URL = "https://google-docs-git-main-hamadshigris-projects.vercel.app";
     const invitationLink =
-        `${process.env.FRONTEND_URL}/invitations/${invitationId}`;
+        `${FRONTEND_URL}/invitations/${invitationId}`;
 
     const info = await transporter.sendMail({
         from: `"Google Docs Clone" <${process.env.EMAIL_USER}>`,
