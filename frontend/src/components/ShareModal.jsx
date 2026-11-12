@@ -19,9 +19,6 @@ const ShareModal = ({ documentId, onClose }) => {
 
     try {
       setLoading(true);
-
-      console.log("1. Sending invitation request...");
-
       const response = await createDocumentInvitation(
         documentId,
         {
@@ -30,8 +27,6 @@ const ShareModal = ({ documentId, onClose }) => {
         },
         token
       );
-
-      console.log("2. Invitation response:", response);
 
       toast.success("Invitation sent successfully!");
 
@@ -46,7 +41,6 @@ const ShareModal = ({ documentId, onClose }) => {
         error.response?.data?.message || "Failed to send invitation"
       );
     } finally {
-      console.log("3. Invitation request finished");
       setLoading(false);
     }
   };

@@ -4,11 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 const Navbar = ({ isLoggedIn, setSearchTerm }) => {
 
-    // const logout = () => {
-    //     localStorage.removeItem("token");
-    //     window.location.href = "/login"; 
-    // }
-
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const isHomePage = pathname === "/";

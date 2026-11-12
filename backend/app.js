@@ -14,8 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(cors());
 
-// Vercel may start handling requests before MongoDB is connected. Wait here so
-// database queries do not sit in Mongoose's buffer and time out later.
+
 app.use(async (req, res, next) => {
   try {
     await connectDB();
@@ -36,13 +35,12 @@ app.get("/", (req, res) => {
   res.send("homepage");
 });
 
-// Vercel imports the Express app as a serverless function. Keep a listener for
-// local development only.
-if (process.env.VERCEL !== "1") {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`server is listening on port ${PORT}`);
-  });
-}
+
+// if (process.env.VERCEL !== "1") {
+//   const PORT = process.env.PORT || 3000;
+//   app.listen(PORT, () => {
+//     console.log(`server is listening on port ${PORT}`);
+//   });
+// }
 
 export default app;

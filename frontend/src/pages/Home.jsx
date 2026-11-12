@@ -1,4 +1,3 @@
-
 import Navbar from "../components/Navbar";
 import Document from "../components/Document";
 import { deleteDocument, getAllDocument } from "../lib/document";

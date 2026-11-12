@@ -76,8 +76,6 @@ export const createDocumentInvitation = async (req, res) => {
     });
 
     try {
-      console.log("1. Starting invitation email...");
-
       await sendInvitationEmail({
         inviteeEmail,
         documentTitle: document.title,
@@ -85,13 +83,9 @@ export const createDocumentInvitation = async (req, res) => {
         invitationId: invitation._id,
       });
 
-      console.log("2. Invitation email sent successfully");
-
     } catch (error) {
       console.log("Email sending failed", error.message);
     }
-
-    console.log("3. Sending API response...");
 
     return res.status(201).json({
       success: true,
@@ -200,7 +194,7 @@ export const acceptInvitation = async (req, res) => {
     if (!invitation) {
       return res.status(404).json({
         success: false,
-        message: "Pending invitation not foundor already processed",
+        message: "Pending invitation not found or already processed",
       });
     }
 

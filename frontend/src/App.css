@@ -167,7 +167,7 @@
 
   &::before,
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -4.5px;
     border: 5px solid transparent;
@@ -184,7 +184,6 @@
 }
 
 /* Quill library css */
-
 
 .document-container {
   min-height: 100vh;
@@ -251,9 +250,11 @@
   min-height: 800px;
   padding: 0;
   line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 .ql-editor.ql-blank::before {
-    left: 48px !important;
+  left: 48px !important;
 }
 @media (max-width: 640px) {
   .document-container {

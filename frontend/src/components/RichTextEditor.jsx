@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import ReactQuill from "react-quill-new";
 import { Quill } from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
@@ -12,8 +12,10 @@ import {
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { IoArrowBack } from "react-icons/io5";
 import { toast } from "react-toastify";
-import Navbar from "./Navbar";
 import ShareModal from "./ShareModal";
+import { FaShareFromSquare } from "react-icons/fa6";
+import { createSocketConnection } from "../socket/socket";
+
 
 const SizeStyle = Quill.import("attributors/style/size");
 SizeStyle.whitelist = [
@@ -50,6 +52,8 @@ export default function RichTextEditor() {
   const [role, setRole] = useState("");
   const [originalTitle, setOriginalTitle] = useState("");
   const [originalContent, setOriginalContent] = useState("");
+  const socketRef = useRef(null);
+  const isJoinedRef = useRef(false);
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -60,6 +64,85 @@ export default function RichTextEditor() {
   const updateNotify = () => toast("Document Updated!");
   const emptyNotify = () =>
     toast("Please add text in the title or content");
+
+
+  useEffect(() => {
+    if (!token || !id) {
+      return;
+    }
+    const socket = createSocketConnection(token);
+
+    socketRef.current = socket;
+
+    const handleConnect = () => {
+      console.log("Socket connected:", socket.id);
+
+      isJoinedRef.current = false;
+
+      socket.emit("join-document", id, (response) => {
+        if (response.success) {
+          isJoinedRef.current = true;
+          console.log("Joined document:", response);
+        } else {
+          console.log("Failed to join:", response.message);
+        }
+      })
+    }
+
+
+    const handleDocumentChanged = (data) => {
+      if (data.documentId !== id) return;
+
+      setContent(data.content);
+    };
+
+    socket.on("connect", handleConnect);
+
+    socket.on("document-changed", handleDocumentChanged);
+
+    socket.on("disconnect", () => {
+      isJoinedRef.current = false;
+    })
+
+    socket.on("connect_error", (error) => {
+      console.log("Socket authentication failed:", error.message);
+    });
+
+    socket.connect();
+
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("document-changed", handleDocumentChanged);
+      socket.disconnect();
+
+      socketRef.current = null;
+      isJoinedRef.current = false;
+    }
+  }, [id, token]);
+
+
+  const handleContentChange = (value, delta, source, editor) => {
+    setContent(value);
+
+    if (source !== "user") return;
+
+    if (!id || role === "viewer") return;
+
+    if (!isJoinedRef.current) return;
+
+    socketRef.current?.emit(
+      "document-update",
+      {
+        documentId: id,
+        content: value
+      },
+      (response) => {
+        if (!response?.success) {
+          console.log("Document update failed:", response?.message);
+        }
+      }
+    )
+  }
 
 
   useEffect(() => {
@@ -87,7 +170,7 @@ export default function RichTextEditor() {
       } catch (error) {
         setError(
           error.response?.data?.message ??
-            "Could not load the document"
+          "Could not load the document"
         );
       } finally {
         setLoading(false);
@@ -130,19 +213,39 @@ export default function RichTextEditor() {
         maxStack: 100,
         userOnly: true,
       },
+      keyboard: {
+        bindings: {
+          enter: {
+            key: 'Enter',
+            handler: function (range, context) {
+              const formats = quill.getFormat(range);
+
+              this.quill.insertText(range.index, '\n', 'user');
+
+              this.quill.setSelection(range.index + 1, 'silent');
+
+              Object.keys(formats.length ? formats : {}).forEach((name) => {
+                this.quill.format(name, formats[name]);
+              });
+
+              return false;
+            }
+          }
+        }
+      }
     }),
     []
   );
 
 
   const normalizeContent = (value) => {
-  return value
-    .replace(/<p><br><\/p>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/<[^>]*>/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-};
+    return value
+      .replace(/<p><br><\/p>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/<[^>]*>/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
 
 
   const executeSubmit = async () => {
@@ -172,7 +275,7 @@ export default function RichTextEditor() {
     } catch (error) {
       setError(
         error.response?.data?.message ??
-          "Could not save the document"
+        "Could not save the document"
       );
     } finally {
       setSaving(false);
@@ -191,7 +294,7 @@ export default function RichTextEditor() {
     const titleChanged = title.trim() !== originalTitle.trim();
     const contentChanged = normalizeContent(content) !== normalizeContent(originalContent);
 
-    if(!titleChanged && !contentChanged) {
+    if (!titleChanged && !contentChanged) {
       toast.info("No changes detected!");
       return;
     }
@@ -214,7 +317,7 @@ export default function RichTextEditor() {
     } catch (error) {
       setError(
         error.response?.data?.message ??
-          "Could not update the document"
+        "Could not update the document"
       );
     } finally {
       setSaving(false);
@@ -246,7 +349,6 @@ export default function RichTextEditor() {
 
   return (
     <>
-      <Navbar isLoggedIn={true} />
 
       <div className="document-container">
         {error && (
@@ -278,11 +380,11 @@ export default function RichTextEditor() {
 
               <div className="flex items-center gap-3">
                 {id && role === "owner" && (
-                  <Button
-                    name="Share"
+                  <FaShareFromSquare
                     onClick={() =>
                       setShowShareModal(true)
                     }
+                    className="cursor-pointer text-2xl"
                   />
                 )}
 
@@ -296,7 +398,7 @@ export default function RichTextEditor() {
                   />
                 )}
 
-              
+
                 {!id && (
                   <Button
                     name={saving ? "Saving..." : "Save"}
@@ -311,7 +413,7 @@ export default function RichTextEditor() {
               <ReactQuill
                 theme="snow"
                 value={content}
-                onChange={setContent}
+                onChange={handleContentChange}
                 modules={modules}
                 formats={formats}
                 readOnly={role === "viewer"}
