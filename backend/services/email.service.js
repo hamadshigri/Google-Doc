@@ -19,7 +19,7 @@ export const sendInvitationEmail = async ({
     role,
     invitationId,
 }) => {
-    const FRONTEND_URL = "http://localhost:5173";
+    const FRONTEND_URL = "https://google-docs-three-mu.vercel.app";
     const invitationLink =
         `${FRONTEND_URL}/invitations/${invitationId}`;
 
